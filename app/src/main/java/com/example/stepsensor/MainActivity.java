@@ -3,6 +3,7 @@ package com.example.stepsensor;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -46,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
         heightEdit = findViewById(R.id.heightEdit);
         okButton = findViewById(R.id.okButton);
         preferences = getSharedPreferences("stepsensor", MODE_PRIVATE);
+        Intent service = new Intent(this, StepService.class);
+        service.putExtra("height", height);
+        startService(service);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
     }
 
@@ -82,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
             sensorManager.registerListener(new SensorEventListener() {
                 @Override
                 public void onSensorChanged(SensorEvent event) {
-                    if (isRunning) {
+                    if (true) {
                         float step = event.values[0];
                         double distance = height / 100000.0 * step * 0.25;
                         double calories = step * 0.05;
