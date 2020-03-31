@@ -21,7 +21,7 @@ import android.widget.Toast;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     TextView stepCountTextView, caloriesCountTextView, distanceCountTextView;
     SensorManager sensorManager;
@@ -47,9 +47,6 @@ public class MainActivity extends AppCompatActivity {
         heightEdit = findViewById(R.id.heightEdit);
         okButton = findViewById(R.id.okButton);
         preferences = getSharedPreferences("stepsensor", MODE_PRIVATE);
-        Intent service = new Intent(this, StepService.class);
-        service.putExtra("height", height);
-        startService(service);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
     }
 
@@ -64,13 +61,10 @@ public class MainActivity extends AppCompatActivity {
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String height = heightEdit.getText().toString();
-                heightEdit.setFocusable(false);
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
-                if (!TextUtils.isEmpty(height.trim())) {
+                String heightEdittext = heightEdit.getText().toString();
+                if (!TextUtils.isEmpty(heightEdittext.trim())) {
                     SharedPreferences.Editor editor = preferences.edit();
-                    editor.putInt("height", Integer.parseInt(height));
+                    editor.putInt("height", Integer.parseInt(heightEdittext));
                     editor.apply();
                 }
             }
@@ -83,27 +77,7 @@ public class MainActivity extends AppCompatActivity {
         isRunning = true;
         Sensor count = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         if (count != null) {
-            sensorManager.registerListener(new SensorEventListener() {
-                @Override
-                public void onSensorChanged(SensorEvent event) {
-                    if (true) {
-                        float step = event.values[0];
-                        double distance = height / 100000.0 * step * 0.25;
-                        double calories = step * 0.05;
-                        String caloriesStr = String.format("%.2f", calories);
-                        String distanceStr = String.format("%.2f", distance);
-
-                        stepCountTextView.setText(step + "");
-                        caloriesCountTextView.setText(caloriesStr);
-                        distanceCountTextView.setText(distanceStr);
-                    }
-                }
-
-                @Override
-                public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-                }
-            }, count, SensorManager.SENSOR_DELAY_FASTEST);
+            sensorManager.registerListener(this, count, SensorManager.SENSOR_DELAY_FASTEST);
         } else {
             Toast.makeText(MainActivity.this, "Sensor not found", Toast.LENGTH_LONG).show();
         }
@@ -113,5 +87,29 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         isRunning = false;
+        sensorManager.unregisterListener(this);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (true) {
+            float step = event.values[0];
+            double distance = height / 100000.0 * step * 0.25;
+            double calories = step * 0.05;
+            String caloriesStr = String.format("%.2f", calories);
+            String distanceStr = String.format("%.2f", distance);
+
+            stepCountTextView.setText(step + "");
+            caloriesCountTextView.setText(caloriesStr);
+            distanceCountTextView.setText(distanceStr);
+            Intent service = new Intent(MainActivity.this, StepService.class);
+            service.putExtra("height", height);
+            startService(service);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }
