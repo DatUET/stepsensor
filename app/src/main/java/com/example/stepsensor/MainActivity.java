@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     Button okButton;
     int height;
     SharedPreferences preferences;
+    Intent service;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void addControl() {
+        service = new Intent(this, StepService.class);
         stepCountTextView = findViewById(R.id.stepCountTextView);
         caloriesCountTextView = findViewById(R.id.caloriesCountTextView);
         distanceCountTextView = findViewById(R.id.distanceCountTextView);
@@ -75,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onResume() {
         super.onResume();
         isRunning = true;
+        stopService(service);
         Sensor count = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         if (count != null) {
             sensorManager.registerListener(this, count, SensorManager.SENSOR_DELAY_FASTEST);
@@ -88,7 +91,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onPause();
         isRunning = false;
         sensorManager.unregisterListener(this);
+        startService(service);
     }
+
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -102,9 +107,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             stepCountTextView.setText(step + "");
             caloriesCountTextView.setText(caloriesStr);
             distanceCountTextView.setText(distanceStr);
-            Intent service = new Intent(MainActivity.this, StepService.class);
-            service.putExtra("height", height);
-            startService(service);
         }
     }
 
@@ -112,4 +114,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+
+
 }
